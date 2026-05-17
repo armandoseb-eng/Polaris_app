@@ -26991,6 +26991,89 @@ function exportPDF(){
 }
 </style>
 
+
+<!-- ATLAS PATCH — WEALTH MANAGER ACTION LABELS (BILINGUAL + MOBILE FRIENDLY) -->
+<style>
+  .modal-box.wealth-modal .wm-actions{
+    display:flex;
+    gap:6px;
+    align-items:center;
+    justify-content:flex-end;
+  }
+  .modal-box.wealth-modal .wm-icon-btn{
+    width:auto !important;
+    min-width:30px !important;
+    height:30px !important;
+    min-height:30px !important;
+    padding:0 8px !important;
+    border-radius:9px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:5px !important;
+    line-height:1 !important;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif !important;
+  }
+  .modal-box.wealth-modal .wm-action-ico{
+    font-size:14px !important;
+    line-height:1 !important;
+    font-weight:800 !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+  .modal-box.wealth-modal .wm-action-label{
+    font-size:10.5px !important;
+    line-height:1 !important;
+    font-weight:750 !important;
+    letter-spacing:-.01em !important;
+    color:inherit !important;
+    white-space:nowrap !important;
+  }
+
+  @media(max-width:640px){
+    .modal-box.wealth-modal .wm-row-head{
+      grid-template-columns:34px 1fr auto !important;
+      gap:10px !important;
+      align-items:start !important;
+    }
+    .modal-box.wealth-modal .wm-row-head .wm-val{
+      grid-column:3 !important;
+      grid-row:1 !important;
+      align-self:start !important;
+    }
+    .modal-box.wealth-modal .wm-row-head .wm-pill{
+      grid-column:2 / 4 !important;
+      grid-row:2 !important;
+      justify-self:start !important;
+      margin-top:2px !important;
+    }
+    .modal-box.wealth-modal .wm-row-head .wm-actions{
+      grid-column:2 / 4 !important;
+      grid-row:3 !important;
+      justify-content:flex-start !important;
+      margin-top:8px !important;
+    }
+    .modal-box.wealth-modal .wm-icon-btn{
+      min-width:54px !important;
+      height:32px !important;
+      min-height:32px !important;
+      padding:0 9px !important;
+      border-radius:10px !important;
+    }
+    .modal-box.wealth-modal .wm-action-ico{
+      font-size:15px !important;
+    }
+    .modal-box.wealth-modal .wm-action-label{
+      font-size:10.5px !important;
+      font-weight:750 !important;
+    }
+    .modal-box.wealth-modal .wm-delete-btn .wm-action-ico{
+      font-size:18px !important;
+    }
+  }
+</style>
+
 </body></html>`);
   win.document.close();
 }
@@ -28295,6 +28378,89 @@ function wmExportExcel(){
 }
 </style>
 
+
+<!-- ATLAS PATCH — WEALTH MANAGER ACTION LABELS (BILINGUAL + MOBILE FRIENDLY) -->
+<style>
+  .modal-box.wealth-modal .wm-actions{
+    display:flex;
+    gap:6px;
+    align-items:center;
+    justify-content:flex-end;
+  }
+  .modal-box.wealth-modal .wm-icon-btn{
+    width:auto !important;
+    min-width:30px !important;
+    height:30px !important;
+    min-height:30px !important;
+    padding:0 8px !important;
+    border-radius:9px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:5px !important;
+    line-height:1 !important;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif !important;
+  }
+  .modal-box.wealth-modal .wm-action-ico{
+    font-size:14px !important;
+    line-height:1 !important;
+    font-weight:800 !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+  .modal-box.wealth-modal .wm-action-label{
+    font-size:10.5px !important;
+    line-height:1 !important;
+    font-weight:750 !important;
+    letter-spacing:-.01em !important;
+    color:inherit !important;
+    white-space:nowrap !important;
+  }
+
+  @media(max-width:640px){
+    .modal-box.wealth-modal .wm-row-head{
+      grid-template-columns:34px 1fr auto !important;
+      gap:10px !important;
+      align-items:start !important;
+    }
+    .modal-box.wealth-modal .wm-row-head .wm-val{
+      grid-column:3 !important;
+      grid-row:1 !important;
+      align-self:start !important;
+    }
+    .modal-box.wealth-modal .wm-row-head .wm-pill{
+      grid-column:2 / 4 !important;
+      grid-row:2 !important;
+      justify-self:start !important;
+      margin-top:2px !important;
+    }
+    .modal-box.wealth-modal .wm-row-head .wm-actions{
+      grid-column:2 / 4 !important;
+      grid-row:3 !important;
+      justify-content:flex-start !important;
+      margin-top:8px !important;
+    }
+    .modal-box.wealth-modal .wm-icon-btn{
+      min-width:54px !important;
+      height:32px !important;
+      min-height:32px !important;
+      padding:0 9px !important;
+      border-radius:10px !important;
+    }
+    .modal-box.wealth-modal .wm-action-ico{
+      font-size:15px !important;
+    }
+    .modal-box.wealth-modal .wm-action-label{
+      font-size:10.5px !important;
+      font-weight:750 !important;
+    }
+    .modal-box.wealth-modal .wm-delete-btn .wm-action-ico{
+      font-size:18px !important;
+    }
+  }
+</style>
+
 </body></html>`;
   wealthDownloadBlob(html,'application/vnd.ms-excel;charset=utf-8',wealthSafeFileName(key)+'.xls');
 }
@@ -28415,7 +28581,7 @@ function renderWealthRow(i,key=wealthManagerKey()){
       <div><div class="wm-name">${escapeHtml(wealthDisplayName(i))}</div><div class="wm-meta">${escapeHtml(wealthDisplayType(i.type))} · ${wealthDisplayKey(key)} · ${t('patrimonio.wmMetaLiquidity')} ${liqDisplay}</div></div>
       <div class="wm-val">${fmt(value)}</div>
       <span class="wm-pill ${riskClass}">${riskDisplay}</span>
-      <div class="wm-actions" onclick="event.stopPropagation()"><button class="wm-icon-btn" onclick="wmToggle('${i.id}')">✎</button><button class="wm-icon-btn del" onclick="wmDelete('${i.id}')">×</button></div>
+      <div class="wm-actions" onclick="event.stopPropagation()"><button class="wm-icon-btn wm-edit-btn" aria-label="${LANG==='en'?'Edit':'Editar'}" onclick="wmToggle('${i.id}')"><span class="wm-action-ico">✎</span><span class="wm-action-label">${LANG==='en'?'Edit':'Editar'}</span></button><button class="wm-icon-btn del wm-delete-btn" aria-label="${LANG==='en'?'Delete':'Eliminar'}" onclick="wmDelete('${i.id}')"><span class="wm-action-ico">×</span><span class="wm-action-label">${LANG==='en'?'Delete':'Eliminar'}</span></button></div>
     </div>
     <div class="wm-form">${renderWealthForm(i,key)}</div>
   </div>`;
@@ -33074,6 +33240,89 @@ function ovRenderInsights(p){
     font-size:9px!important;
   }
 }
+</style>
+
+
+<!-- ATLAS PATCH — WEALTH MANAGER ACTION LABELS (BILINGUAL + MOBILE FRIENDLY) -->
+<style>
+  .modal-box.wealth-modal .wm-actions{
+    display:flex;
+    gap:6px;
+    align-items:center;
+    justify-content:flex-end;
+  }
+  .modal-box.wealth-modal .wm-icon-btn{
+    width:auto !important;
+    min-width:30px !important;
+    height:30px !important;
+    min-height:30px !important;
+    padding:0 8px !important;
+    border-radius:9px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:5px !important;
+    line-height:1 !important;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif !important;
+  }
+  .modal-box.wealth-modal .wm-action-ico{
+    font-size:14px !important;
+    line-height:1 !important;
+    font-weight:800 !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+  .modal-box.wealth-modal .wm-action-label{
+    font-size:10.5px !important;
+    line-height:1 !important;
+    font-weight:750 !important;
+    letter-spacing:-.01em !important;
+    color:inherit !important;
+    white-space:nowrap !important;
+  }
+
+  @media(max-width:640px){
+    .modal-box.wealth-modal .wm-row-head{
+      grid-template-columns:34px 1fr auto !important;
+      gap:10px !important;
+      align-items:start !important;
+    }
+    .modal-box.wealth-modal .wm-row-head .wm-val{
+      grid-column:3 !important;
+      grid-row:1 !important;
+      align-self:start !important;
+    }
+    .modal-box.wealth-modal .wm-row-head .wm-pill{
+      grid-column:2 / 4 !important;
+      grid-row:2 !important;
+      justify-self:start !important;
+      margin-top:2px !important;
+    }
+    .modal-box.wealth-modal .wm-row-head .wm-actions{
+      grid-column:2 / 4 !important;
+      grid-row:3 !important;
+      justify-content:flex-start !important;
+      margin-top:8px !important;
+    }
+    .modal-box.wealth-modal .wm-icon-btn{
+      min-width:54px !important;
+      height:32px !important;
+      min-height:32px !important;
+      padding:0 9px !important;
+      border-radius:10px !important;
+    }
+    .modal-box.wealth-modal .wm-action-ico{
+      font-size:15px !important;
+    }
+    .modal-box.wealth-modal .wm-action-label{
+      font-size:10.5px !important;
+      font-weight:750 !important;
+    }
+    .modal-box.wealth-modal .wm-delete-btn .wm-action-ico{
+      font-size:18px !important;
+    }
+  }
 </style>
 
 </body>
