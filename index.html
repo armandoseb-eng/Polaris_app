@@ -9244,6 +9244,20 @@ button.save-profile-btn{
 .wealth-updated{text-align:center;font-size:11px;color:var(--ink4);margin-top:14px;}
 /* Wealth manager modal */
 .modal-box.wealth-modal{max-width:980px;width:min(980px,96vw);max-height:90vh;padding:0;overflow:hidden;}
+/* ATLAS PATCH — Wealth modal: hide internal scrollbars while keeping scroll behavior */
+.modal-box.wealth-modal,
+.modal-box.wealth-modal .wm-main,
+.modal-box.wealth-modal .wm-shell{
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+.modal-box.wealth-modal::-webkit-scrollbar,
+.modal-box.wealth-modal .wm-main::-webkit-scrollbar,
+.modal-box.wealth-modal .wm-shell::-webkit-scrollbar{
+  display:none!important;
+  width:0!important;
+  height:0!important;
+}
 .wm-shell{display:grid;grid-template-columns:230px 1fr;min-height:680px;max-height:90vh;}
 .wm-side{background:var(--cream2);border-right:1px solid var(--border);padding:20px;display:flex;flex-direction:column;gap:12px;}
 .wm-title{font-size:22px;font-weight:800;letter-spacing:-.035em;color:var(--ink);}.wm-sub{font-size:12px;color:var(--ink3);line-height:1.45;margin-bottom:8px;}
@@ -13080,6 +13094,32 @@ function wealthDisplayName(item){
   // This avoids touching personal labels like “Credit card - Amex”.
   if(item && String(item.type||'').trim()===raw) return wealthTypeLabel(raw);
   return raw;
+}
+
+// ATLAS PATCH — Wealth modal category i18n
+// Store wealth categories as stable canonical values, but display them in the active language.
+function wealthCanonicalType(value){
+  const raw=String(value||'').trim();
+  if(!raw) return raw;
+  return (WEALTH_TYPE_LABELS.es && WEALTH_TYPE_LABELS.es[raw]) || raw;
+}
+function wealthTypeOptions(kind,current){
+  const canonical=wealthCanonicalType(current);
+  const base=kind==='asset'?WEALTH_ASSET_TYPES:WEALTH_LIAB_TYPES;
+  const options=[...base];
+  if(canonical && !options.includes(canonical)) options.push(canonical);
+  return options.map(tp=>`<option value="${escapeHtml(tp)}" ${canonical===tp?'selected':''}>${escapeHtml(wealthTypeLabel(tp))}</option>`).join('');
+}
+function wealthDisplayType(value){
+  return wealthTypeLabel(wealthCanonicalType(value));
+}
+function wealthTypeIcon(value){
+  const canonical=wealthCanonicalType(value);
+  return WEALTH_TYPE_ICONS[canonical] || WEALTH_TYPE_ICONS[value] || '•';
+}
+function wealthTypeSearchText(value){
+  const canonical=wealthCanonicalType(value);
+  return [value,canonical,wealthTypeLabel(value),wealthTypeLabel(canonical)].filter(Boolean).join(' ');
 }
 function wealthCatsLabel(n){
   return LANG==='en' ? (n===1?'cat':'cats') : (n===1?'cat.':'cats');
@@ -27583,7 +27623,7 @@ function wealthBar(i,idx,total){
 }
 function wealthMiniItem(i,total,isLiab=false){
   const pct=total?(+i.value||0)/total*100:0;
-  return `<div class="witem"><div class="witem-ico">${WEALTH_TYPE_ICONS[i.type]||'•'}</div><div><div class="witem-name">${escapeHtml(wealthDisplayName(i))}</div><div class="witem-sub">${escapeHtml(i.type)}</div></div><div><div class="witem-val">${fmt(i.value)}</div><div class="witem-pct">${pct.toFixed(1)}%</div></div></div>`;
+  return `<div class="witem"><div class="witem-ico">${wealthTypeIcon(i.type)}</div><div><div class="witem-name">${escapeHtml(wealthDisplayName(i))}</div><div class="witem-sub">${escapeHtml(wealthDisplayType(i.type))}</div></div><div><div class="witem-val">${fmt(i.value)}</div><div class="witem-pct">${pct.toFixed(1)}%</div></div></div>`;
 }
 function wealthReadings(totals,topAssets){
   const liquidLow=totals.liquid<12;
@@ -28352,7 +28392,7 @@ function wmSwitch(tab){wealthMgrTab=tab;document.getElementById('modalBox').inne
 function renderWealthItems(active){
   const kind=active==='assets'?'asset':'liability';
   const key=wealthManagerKey();
-  const items=ensureWealth().items.filter(i=>i.kind===kind && (!wealthQuery || (i.name+' '+i.type).toLowerCase().includes(wealthQuery.toLowerCase())));
+  const items=ensureWealth().items.filter(i=>i.kind===kind && (!wealthQuery || (i.name+' '+wealthTypeSearchText(i.type)).toLowerCase().includes(wealthQuery.toLowerCase())));
   const sectionLabel=kind==='asset'?t('patrimonio.wmSectionAssets'):t('patrimonio.wmSectionLiabs');
   const searchPh=kind==='asset'?t('patrimonio.wmSearchAssets'):t('patrimonio.wmSearchLiabs');
   const addBtn=kind==='asset'?t('patrimonio.wmAddAsset'):t('patrimonio.wmAddLiab');
@@ -28371,8 +28411,8 @@ function renderWealthRow(i,key=wealthManagerKey()){
   const value=wealthItemValue(i,key);
   return `<div class="wm-row" id="wm-${i.id}">
     <div class="wm-row-head" onclick="wmToggle('${i.id}')">
-      <div class="wm-ico">${WEALTH_TYPE_ICONS[i.type]||'•'}</div>
-      <div><div class="wm-name">${escapeHtml(wealthDisplayName(i))}</div><div class="wm-meta">${escapeHtml(i.type)} · ${wealthDisplayKey(key)} · ${t('patrimonio.wmMetaLiquidity')} ${liqDisplay}</div></div>
+      <div class="wm-ico">${wealthTypeIcon(i.type)}</div>
+      <div><div class="wm-name">${escapeHtml(wealthDisplayName(i))}</div><div class="wm-meta">${escapeHtml(wealthDisplayType(i.type))} · ${wealthDisplayKey(key)} · ${t('patrimonio.wmMetaLiquidity')} ${liqDisplay}</div></div>
       <div class="wm-val">${fmt(value)}</div>
       <span class="wm-pill ${riskClass}">${riskDisplay}</span>
       <div class="wm-actions" onclick="event.stopPropagation()"><button class="wm-icon-btn" onclick="wmToggle('${i.id}')">✎</button><button class="wm-icon-btn del" onclick="wmDelete('${i.id}')">×</button></div>
@@ -28390,7 +28430,7 @@ function renderWealthForm(i,key=wealthManagerKey()){
   const riskLabel=k=>k==='Bajo'?t('patrimonio.wmRiskLow'):k==='Alto'?t('patrimonio.wmRiskHigh'):t('patrimonio.wmRiskMid');
   return `<div class="wm-grid">
     <div><label class="wm-label">${t('patrimonio.wmLabelName')}</label><input class="wm-input" id="wm-name-${i.id}" value="${escapeHtml(wealthDisplayName(i))}"></div>
-    <div><label class="wm-label">${t('patrimonio.wmLabelCategory')}</label><select class="wm-select" id="wm-type-${i.id}">${types.map(tp=>`<option ${i.type===tp?'selected':''}>${tp}</option>`).join('')}</select></div>
+    <div><label class="wm-label">${t('patrimonio.wmLabelCategory')}</label><select class="wm-select" id="wm-type-${i.id}">${wealthTypeOptions(i.kind,i.type)}</select></div>
     <div><label class="wm-label">${t('patrimonio.wmLabelValue').replace('{month}',wealthDisplayKey(key))}</label><input class="wm-input" type="number" id="wm-value-${i.id}" value="${value}"></div>
     <div><label class="wm-label">${t('patrimonio.wmLabelLiquidity')}</label><select class="wm-select" id="wm-liq-${i.id}">${LIQ_KEYS.map(k=>`<option value="${k}" ${i.liquidity===k?'selected':''}>${liqLabel(k)}</option>`).join('')}</select></div>
     <div><label class="wm-label">${t('patrimonio.wmLabelRisk')}</label><select class="wm-select" id="wm-risk-${i.id}">${RISK_KEYS.map(k=>`<option value="${k}" ${i.risk===k?'selected':''}>${riskLabel(k)}</option>`).join('')}</select></div>
@@ -28470,14 +28510,14 @@ function wmDeleteMonth(){
 
 function wmAdd(kind){
   const key=wealthManagerKey();
-  const item={id:uid(),kind,name:kind==='asset'?t('patrimonio.wmNewAsset'):t('patrimonio.wmNewLiab'),type:kind==='asset'?t('patrimonio.wmDefaultAssetType'):t('patrimonio.wmDefaultLiabType'),value:0,monthlyValues:{[key]:0},liquidity:'Media',risk:'Medio',monthlyContribution:0,notes:''};
+  const item={id:uid(),kind,name:kind==='asset'?t('patrimonio.wmNewAsset'):t('patrimonio.wmNewLiab'),type:kind==='asset'?'ETF':'Tarjeta de crédito',value:0,monthlyValues:{[key]:0},liquidity:'Media',risk:'Medio',monthlyContribution:0,notes:''};
   ensureWealth().items.unshift(item);persist();wealthMgrTab=kind==='asset'?'assets':'liabilities';wmSwitch(wealthMgrTab);setTimeout(()=>{const r=document.getElementById('wm-'+item.id);if(r)r.classList.add('open');},50);
 }
 function wmSave(id){
   const item=ensureWealth().items.find(i=>i.id===id); if(!item)return;
   const key=wealthManagerKey();
   item.name=document.getElementById('wm-name-'+id).value.trim()||item.name;
-  item.type=document.getElementById('wm-type-'+id).value;
+  item.type=wealthCanonicalType(document.getElementById('wm-type-'+id).value);
   const val=+document.getElementById('wm-value-'+id).value||0;
   wealthSetItemValue(item,key,val);
   item.liquidity=document.getElementById('wm-liq-'+id).value;
