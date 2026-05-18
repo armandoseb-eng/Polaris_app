@@ -13169,6 +13169,8 @@ function setLang(lang){
   if(typeof updateSidebarNav === 'function') updateSidebarNav();
   if(typeof initMonths === 'function') initMonths();
   if(typeof render === 'function') render();
+  // Safety pass: any dynamic month dropdown generated before the language switch
+  // is rebuilt by render(); this final pass handles static/literal leftovers.
   if(typeof applyLiteralTranslations === 'function') applyLiteralTranslations(document);
 }
 
@@ -22559,20 +22561,22 @@ function ovAskNorm(s){
     .trim();
 }
 
-// Month aliases — covers full names, short forms, and accent-stripped variants
+// Month aliases — bilingual, accent-stripped and language-safe.
+// Keep this parser independent from UI labels so Ask Your Data works cleanly
+// after switching between EN/ES and also understands either language.
 const OV_ASK_MONTHS=[
-  {idx:0,words:['enero','ene']},
-  {idx:1,words:['febrero','feb']},
-  {idx:2,words:['marzo','mar']},
-  {idx:3,words:['abril','abr']},
-  {idx:4,words:['mayo','may']},
-  {idx:5,words:['junio','jun']},
-  {idx:6,words:['julio','jul']},
-  {idx:7,words:['agosto','ago']},
-  {idx:8,words:['septiembre','setiembre','sept','sep']},
-  {idx:9,words:['octubre','oct']},
-  {idx:10,words:['noviembre','nov']},
-  {idx:11,words:['diciembre','dic']}
+  {idx:0,words:['enero','ene','january','jan']},
+  {idx:1,words:['febrero','feb','february']},
+  {idx:2,words:['marzo','mar','march']},
+  {idx:3,words:['abril','abr','april','apr']},
+  {idx:4,words:['mayo','may','may']},
+  {idx:5,words:['junio','jun','june']},
+  {idx:6,words:['julio','jul','july']},
+  {idx:7,words:['agosto','ago','august','aug']},
+  {idx:8,words:['septiembre','setiembre','sept','sep','september']},
+  {idx:9,words:['octubre','oct','october']},
+  {idx:10,words:['noviembre','nov','november']},
+  {idx:11,words:['diciembre','dic','december','dec']}
 ];
 
 function ovAskFindMonth(norm){
@@ -24231,11 +24235,11 @@ function buildPeriodBar(p){
   const customUI=ovPeriod.kind==='custom'?`
     <div class="ov-period-range">
       <select class="ov-period-select" onchange="setOvCustomFrom(this.value)" style="min-width:auto;width:auto">
-        ${MONTHS.map((m,i)=>`<option value="${i}"${i===curFrom?' selected':''}>${m}</option>`).join('')}
+        ${tMonths().map((m,i)=>`<option value="${i}"${i===curFrom?' selected':''}>${m}</option>`).join('')}
       </select>
       <span style="color:var(--ink4);font-size:12px">→</span>
       <select class="ov-period-select" onchange="setOvCustomTo(this.value)" style="min-width:auto;width:auto">
-        ${MONTHS.map((m,i)=>`<option value="${i}"${i===curTo?' selected':''}>${m}</option>`).join('')}
+        ${tMonths().map((m,i)=>`<option value="${i}"${i===curTo?' selected':''}>${m}</option>`).join('')}
       </select>
     </div>`:'';
 
