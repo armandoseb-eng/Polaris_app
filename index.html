@@ -10496,6 +10496,68 @@ textarea[placeholder*="momentos de gasto"]{
   .dw-week{padding-left:3px !important;padding-right:3px !important;}
   .dw-week-range{font-size:11px !important;}
 }
+
+
+/* ═══════════════════════════════════════════
+   ATLAS PATCH — PREMIUM MOBILE SUMMARY CONTRACTION
+   Smooths the Income / Expenses / Savings / Investment / Available cards when
+   they move from the 2-column layout into the compact strip on mobile.
+═══════════════════════════════════════════ */
+@media(max-width:780px){
+  .sumbar{
+    transition:
+      padding .52s cubic-bezier(.22,1,.36,1),
+      gap .52s cubic-bezier(.22,1,.36,1),
+      background .52s cubic-bezier(.22,1,.36,1),
+      box-shadow .52s cubic-bezier(.22,1,.36,1);
+    will-change:padding,gap;
+    contain:layout paint;
+  }
+  .sumbar .scard{
+    transition:
+      transform .52s cubic-bezier(.22,1,.36,1),
+      min-height .52s cubic-bezier(.22,1,.36,1),
+      padding .52s cubic-bezier(.22,1,.36,1),
+      border-radius .52s cubic-bezier(.22,1,.36,1),
+      border-width .52s cubic-bezier(.22,1,.36,1),
+      box-shadow .52s cubic-bezier(.22,1,.36,1),
+      background .52s cubic-bezier(.22,1,.36,1),
+      opacity .34s ease;
+    transform-origin:center top;
+    will-change:transform,min-height,padding,border-radius;
+    backface-visibility:hidden;
+  }
+  .scard-top,
+  .scard-dot,
+  .scard-lbl,
+  .scard-val{
+    transition:
+      transform .52s cubic-bezier(.22,1,.36,1),
+      font-size .52s cubic-bezier(.22,1,.36,1),
+      line-height .52s cubic-bezier(.22,1,.36,1),
+      letter-spacing .52s cubic-bezier(.22,1,.36,1),
+      width .52s cubic-bezier(.22,1,.36,1),
+      height .52s cubic-bezier(.22,1,.36,1),
+      margin .52s cubic-bezier(.22,1,.36,1),
+      gap .52s cubic-bezier(.22,1,.36,1),
+      opacity .34s ease;
+    will-change:transform,font-size,width,height;
+  }
+  .app.summary-animating .sumbar .scard{
+    pointer-events:none;
+  }
+}
+@media(max-width:780px) and (prefers-reduced-motion:reduce){
+  .sumbar,
+  .sumbar .scard,
+  .scard-top,
+  .scard-dot,
+  .scard-lbl,
+  .scard-val{
+    transition:none !important;
+    animation:none !important;
+  }
+}
 </style>
 <!-- PATRIMONIO_VERSION: 6M_CARDS_FIXED_MOBILE_6M_CHART -->
 <!-- ATLAS_VERSION: PULSE_4_CHIPS_HOME_POSSESSIVE -->
@@ -25480,43 +25542,128 @@ function normalizePeriodStartDay(v){
   if(!Number.isFinite(n))return 1;
   return Math.max(1,Math.min(31,n));
 }
+function parsePeriodStartInput(v){
+  const raw=String(v||'').trim();
+  const lower=raw.toLowerCase();
+  const monthMap={
+    jan:0,january:0,ene:0,enero:0,
+    feb:1,february:1,febrero:1,
+    mar:2,march:2,marzo:2,
+    apr:3,april:3,abr:3,abril:3,
+    may:4,mayo:4,
+    jun:5,june:5,junio:5,
+    jul:6,july:6,julio:6,
+    aug:7,august:7,ago:7,agosto:7,
+    sep:8,sept:8,september:8,septiembre:8,set:8,
+    oct:9,october:9,octubre:9,
+    nov:10,november:10,noviembre:10,
+    dec:11,december:11,dic:11,diciembre:11
+  };
+  const monthNames=Object.keys(monthMap).sort((a,b)=>b.length-a.length);
+  let monthIndex=null;
+  let day=null;
+
+  for(const name of monthNames){
+    const re=new RegExp('(^|\\b)'+name+'(\\b|$)','i');
+    if(re.test(lower)){monthIndex=monthMap[name];break;}
+  }
+
+  const nums=lower.match(/\b([1-9]|[12][0-9]|3[01])\b/g);
+  if(nums&&nums.length){
+    day=normalizePeriodStartDay(nums[0]);
+  }
+  if(day===null)day=1;
+
+  return {day,monthIndex,raw};
+}
 function getPeriodStartDay(){
+  if(CONFIG.periodInput){return parsePeriodStartInput(CONFIG.periodInput).day;}
   if(CONFIG.periodStartDay)return normalizePeriodStartDay(CONFIG.periodStartDay);
   if(CONFIG.periodLabel){
-    const m=String(CONFIG.periodLabel).match(/\b([1-9]|[12][0-9]|3[01])\b/);
-    if(m)return normalizePeriodStartDay(m[1]);
+    const parsed=parsePeriodStartInput(CONFIG.periodLabel);
+    if(parsed.day)return parsed.day;
   }
   if(CONFIG.period&&/^\d{1,2}/.test(CONFIG.period)){
     return normalizePeriodStartDay(CONFIG.period.match(/^\d{1,2}/)[0]);
   }
   return 1;
 }
-function updatePeriodLabel(){
-  const el=document.getElementById('periodLbl');
-  if(!el)return;
-  const startDay=getPeriodStartDay();
-  const daysInMonth=new Date(cY,cM+1,0).getDate();
-  let d1,d2;
-  if(startDay<=1){
-    d1=new Date(cY,cM,1);
-    d2=new Date(cY,cM,daysInMonth);
-  }else{
-    const safeStart=Math.min(startDay,daysInMonth);
-    d1=new Date(cY,cM,safeStart);
-    const nextMonthDays=new Date(cY,cM+2,0).getDate();
-    d2=new Date(cY,cM+1,Math.min(startDay-1,nextMonthDays));
+function getPeriodStartMonth(){
+  if(CONFIG.periodInput){
+    const parsed=parsePeriodStartInput(CONFIG.periodInput);
+    if(parsed.monthIndex!==null)return parsed.monthIndex;
   }
-  const fmtD=d=>`${d.getDate()} ${tMonthsS()[d.getMonth()]}`;
-  el.textContent=`${fmtD(d1)} – ${fmtD(d2)}`;
+  if(Number.isInteger(CONFIG.periodStartMonth))return CONFIG.periodStartMonth;
+  return null;
+}
+function periodLooksLikeManualRange(raw){
+  return /\d/.test(String(raw||'')) && /\s*[-–—]\s*/.test(String(raw||''));
+}
+function titleCasePeriodToken(tok){
+  const m=String(tok||'').trim();
+  if(!m)return m;
+  const low=m.toLowerCase();
+  const map={
+    jan:'Jan',january:'January',ene:'Ene',enero:'Enero',
+    feb:'Feb',february:'February',febrero:'Febrero',
+    mar:'Mar',march:'March',marzo:'Marzo',
+    apr:'Apr',april:'April',abr:'Abr',abril:'Abril',
+    may:'May',mayo:'Mayo',jun:'Jun',june:'June',junio:'Junio',
+    jul:'Jul',july:'July',julio:'Julio',aug:'Aug',august:'August',ago:'Ago',agosto:'Agosto',
+    sep:'Sep',sept:'Sept',september:'September',septiembre:'Septiembre',set:'Set',
+    oct:'Oct',october:'October',octubre:'Octubre',nov:'Nov',november:'November',noviembre:'Noviembre',
+    dec:'Dec',december:'December',dic:'Dic',diciembre:'Diciembre'
+  };
+  return map[low] || (m.charAt(0).toUpperCase()+m.slice(1));
+}
+function normalizeManualPeriodLabel(raw){
+  return String(raw||'')
+    .trim()
+    .replace(/\s*[–—-]\s*/g,' – ')
+    .replace(/\s+/g,' ')
+    .replace(/\b([A-Za-zÁÉÍÓÚáéíóúñÑ]+)\b/g,function(x){return titleCasePeriodToken(x);});
+}
+function getManualPeriodLabel(){
+  const raw=CONFIG.periodManualLabel || CONFIG.periodInput || '';
+  if(periodLooksLikeManualRange(raw))return normalizeManualPeriodLabel(raw);
+  return '';
+}
+function updatePeriodLabel(){
+  const manualLabel=getManualPeriodLabel();
+  let label=manualLabel;
+  if(!label){
+    const startDay=getPeriodStartDay();
+    const manualMonth=getPeriodStartMonth();
+    const baseMonth=(manualMonth!==null)?manualMonth:cM;
+    const baseYear=cY;
+    const daysInMonth=new Date(baseYear,baseMonth+1,0).getDate();
+    let d1,d2;
+    if(startDay<=1){
+      d1=new Date(baseYear,baseMonth,1);
+      d2=new Date(baseYear,baseMonth,daysInMonth);
+    }else{
+      const safeStart=Math.min(startDay,daysInMonth);
+      d1=new Date(baseYear,baseMonth,safeStart);
+      const nextMonthDays=new Date(baseYear,baseMonth+2,0).getDate();
+      d2=new Date(baseYear,baseMonth+1,Math.min(startDay-1,nextMonthDays));
+    }
+    const fmtD=d=>`${d.getDate()} ${tMonthsS()[d.getMonth()]}`;
+    label=`${fmtD(d1)} – ${fmtD(d2)}`;
+  }
+  const el=document.getElementById('periodLbl');
+  const mob=document.getElementById('periodLblMobile');
+  if(el)el.textContent=label;
+  if(mob)mob.textContent=label;
 }
 function openPeriodEdit(){
+  const currentInput=CONFIG.periodInput||String(getPeriodStartDay());
   openModal(`<div class="modal-title">${t('period.title')}<button class="modal-close" type="button" onclick="closeModal()">✕</button></div>
     <div style="font-size:13px;color:var(--ink3);line-height:1.6;margin-bottom:16px">${t('period.hint1')}<br><strong>${t('period.example1')}</strong> ${t('period.or')} <strong>${t('period.example2')}</strong></div>
     <div class="form-row">
       <label class="ob-label" for="pe-start-day" style="display:block;margin-bottom:6px;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink4)">${t('period.startDayLabel')}</label>
       <div class="period-day-editor">
         <button class="period-step-btn" type="button" id="pe-minus" aria-label="Decrease">−</button>
-        <input class="finput period-day-input" id="pe-start-day" type="text" inputmode="text" autocomplete="off" enterkeyhint="done" maxlength="24" placeholder="21 / Feb 21 / May 1" value="${getPeriodStartDay()}">
+        <input class="finput period-day-input" id="pe-start-day" type="text" inputmode="text" autocomplete="off" enterkeyhint="done" maxlength="24" placeholder="21 / Feb 21 / May 1" value="${currentInput.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}">
         <button class="period-step-btn" type="button" id="pe-plus" aria-label="Increase">+</button>
       </div>
       <div class="period-quick-days" id="periodQuickDays"></div>
@@ -25529,28 +25676,13 @@ function openPeriodEdit(){
   const apply=document.getElementById('pe-apply');
   const quick=document.getElementById('periodQuickDays');
 
-  function parsePeriodStartText(v){
-    const raw=String(v||'').trim().toLowerCase();
-    if(!raw)return 1;
-    const monthNames=[
-      'jan','january','ene','enero','feb','february','febrero','mar','march','marzo','apr','april','abr','abril','may','mayo','jun','june','junio','jul','july','julio','aug','august','ago','agosto','sep','sept','september','septiembre','oct','october','octubre','nov','november','noviembre','dec','december','dic','diciembre'
-    ];
-    const monthPattern=monthNames.join('|');
-    let m=raw.match(new RegExp('(?:'+monthPattern+')\s*([1-9]|[12][0-9]|3[01])\b','i'));
-    if(m)return normalizePeriodStartDay(m[1]);
-    m=raw.match(new RegExp('\b([1-9]|[12][0-9]|3[01])\s*(?:'+monthPattern+')\b','i'));
-    if(m)return normalizePeriodStartDay(m[1]);
-    m=raw.match(/([1-9]|[12][0-9]|3[01])/);
-    if(m)return normalizePeriodStartDay(m[1]);
-    return 1;
-  }
   function setVal(v,selectIt){
     if(!input)return;
     input.value=String(v||'');
     if(selectIt){try{input.focus({preventScroll:true});input.select();}catch(_){input.focus();}}
   }
   function step(delta){
-    const cur=parsePeriodStartText(input&&input.value);
+    const cur=parsePeriodStartInput(input&&input.value).day;
     setVal(Math.max(1,Math.min(31,cur+delta)),true);
   }
 
@@ -25560,13 +25692,9 @@ function openPeriodEdit(){
     input.removeAttribute('disabled');
     input.removeAttribute('readonly');
 
-    // Keep all typing inside the modal input. Some global UI listeners use capture
-    // for charts/overlays; stopping propagation here prevents them from stealing keys.
     ['keydown','keypress','keyup','beforeinput','input','mousedown','mouseup','click','touchstart','touchend','pointerdown','pointerup'].forEach(function(type){
       input.addEventListener(type,function(ev){ev.stopPropagation();},true);
     });
-    // Free typing is intentional here: users can enter just a day (21),
-    // or a natural date fragment (Feb 21, 21 May, March 1, etc.).
     input.addEventListener('keydown',function(ev){
       if(ev.key==='Enter'){ev.preventDefault();savePeriodEdit();}
       if(ev.key==='ArrowUp'){ev.preventDefault();step(1);}
@@ -25582,15 +25710,28 @@ function openPeriodEdit(){
       btn.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();setVal(btn.dataset.day,true);});
     });
   }
-  setTimeout(function(){setVal(getPeriodStartDay(),true);},80);
+  setTimeout(function(){setVal(currentInput,true);},80);
 }
 function savePeriodEdit(){
   const input=document.getElementById('pe-start-day');
-  const startDay=(typeof parsePeriodStartText==='function')?parsePeriodStartText(input?input.value:1):normalizePeriodStartDay(input?input.value:1);
-  CONFIG.periodStartDay=startDay;
-  CONFIG.period=`${startDay}-cycle`;
+  const raw=String(input?input.value:'').trim();
+  const parsed=parsePeriodStartInput(raw||'1');
+  CONFIG.periodInput=raw||String(parsed.day);
+  CONFIG.periodStartDay=parsed.day;
+  if(periodLooksLikeManualRange(raw)){
+    CONFIG.periodManualLabel=normalizeManualPeriodLabel(raw);
+    delete CONFIG.periodStartMonth;
+  }else{
+    delete CONFIG.periodManualLabel;
+    if(parsed.monthIndex!==null)CONFIG.periodStartMonth=parsed.monthIndex;
+    else delete CONFIG.periodStartMonth;
+  }
+  CONFIG.period=`${parsed.day}-cycle`;
   delete CONFIG.periodLabel;
-  persist();updatePeriodLabel();closeModal();
+  persist();
+  updatePeriodLabel();
+  closeModal();
+  try{render();updatePeriodLabel();}catch(_){ }
 }
 // ═══════════════════════════════════
 // RESET GRANULAR
@@ -28996,8 +29137,52 @@ function updateMobileSummaryCompact(){
   const shell=document.getElementById('appShell');
   const scroller=document.getElementById('mainScroll');
   if(!shell||!scroller)return;
-  const isMobile=true;
-  shell.classList.toggle('summary-compact',isMobile&&scroller.scrollTop>28);
+
+  // Mobile only: desktop keeps its own rhythm.
+  const isMobile=window.matchMedia('(max-width:780px)').matches;
+  const shouldCompact=isMobile&&scroller.scrollTop>28;
+  const isCompact=shell.classList.contains('summary-compact');
+  if(shouldCompact===isCompact)return;
+
+  // FLIP animation: measure the cards before and after the layout change,
+  // then animate their transform back to zero. This avoids the old hard jump.
+  const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cards=[...shell.querySelectorAll('.sumbar .scard')];
+  const first=new Map(cards.map(card=>[card,card.getBoundingClientRect()]));
+
+  shell.classList.add('summary-animating');
+  shell.classList.toggle('summary-compact',shouldCompact);
+
+  if(reduceMotion||!cards.length){
+    shell.classList.remove('summary-animating');
+    return;
+  }
+
+  cards.forEach(card=>{
+    const a=first.get(card);
+    const b=card.getBoundingClientRect();
+    if(!a||!b)return;
+    const dx=a.left-b.left;
+    const dy=a.top-b.top;
+    const sx=a.width&&b.width?a.width/b.width:1;
+    const sy=a.height&&b.height?a.height/b.height:1;
+    card.style.transition='none';
+    card.style.transform=`translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+  });
+
+  requestAnimationFrame(()=>{
+    cards.forEach(card=>{
+      card.style.transition='transform .58s cubic-bezier(.22,1,.36,1), min-height .52s cubic-bezier(.22,1,.36,1), padding .52s cubic-bezier(.22,1,.36,1), border-radius .52s cubic-bezier(.22,1,.36,1), border-width .52s cubic-bezier(.22,1,.36,1), box-shadow .52s cubic-bezier(.22,1,.36,1), background .52s cubic-bezier(.22,1,.36,1), opacity .34s ease';
+      card.style.transform='';
+    });
+    window.setTimeout(()=>{
+      cards.forEach(card=>{
+        card.style.transition='';
+        card.style.transform='';
+      });
+      shell.classList.remove('summary-animating');
+    },620);
+  });
 }
 
 function initMobileSummaryCompact(){
@@ -29237,6 +29422,8 @@ function obSelectPhoto(e){
       const ctx=canvas.getContext('2d');
       ctx.drawImage(img,0,0,w,h);
       obPhotoData=canvas.toDataURL('image/jpeg',0.82);
+      CONFIG.photo=obPhotoData;
+      try{persist();updateProfileBtn();}catch(_){}
       const circle=document.getElementById('ob-photo-circle');
       if(!circle)return;
       circle.classList.add('has-photo');
