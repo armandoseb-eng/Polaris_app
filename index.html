@@ -27714,6 +27714,20 @@ function wealthTotals(key=wealthCurrentKey()){
 }
 function wealthCurrentKey(){return mKey(cM,cY);}
 function wealthMonthVal(key){const w=ensureWealth();return w.monthly[key];}
+function wealthHasItemValuesForKey(key){
+  const w=ensureWealth();
+  return (w.items||[]).some(i=>i.monthlyValues && i.monthlyValues[key]!=null && (+i.monthlyValues[key]||0)>0);
+}
+function wealthLedgerValue(key){
+  const computed=wealthTotals(key).net;
+  const stored=wealthMonthVal(key);
+  // If the manager has asset/liability values for this month, the evolution
+  // chart must use those live values. This fixes months like May showing £0
+  // even when the modal already contains assets and liabilities for May.
+  if(wealthHasItemValuesForKey(key)) return computed;
+  if(stored!=null) return +stored||0;
+  return computed||0;
+}
 function wealthSetMonthVal(key,val){ensureWealth().monthly[key]=Math.max(0,+val||0);persist();render();}
 function wealthKeyToDate(key){
   const [y,m]=String(key||'').split('-').map(Number);
@@ -27749,8 +27763,7 @@ function wealthSeries(){
   for(let i=0;i<months;i++){
     const d=new Date(start.getFullYear(),start.getMonth()+i,1);
     const key=mKey(d.getMonth(),d.getFullYear());
-    let v=wealthMonthVal(key);
-    if(v==null) v=0;
+    const v=wealthLedgerValue(key);
     arr.push({m:d.getMonth(),y:d.getFullYear(),key,val:v});
   }
   return arr;
