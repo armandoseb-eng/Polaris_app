@@ -596,6 +596,28 @@ input.finput[type="date"]::-webkit-calendar-picker-indicator{opacity:.5;cursor:p
     max-height:78vh;
   }
 }
+
+/* ATLAS PATCH — keep modal form controls fully interactive above backdrop blur */
+.modal-overlay input,.modal-overlay textarea,.modal-overlay select,.modal-overlay button{
+  pointer-events:auto;
+  -webkit-user-select:text;
+  user-select:text;
+}
+.modal-overlay button{
+  -webkit-user-select:none;
+  user-select:none;
+}
+
+
+/* ATLAS PATCH — editable monthly cycle input */
+.period-day-editor{display:grid;grid-template-columns:42px minmax(0,1fr) 42px;gap:8px;align-items:center;}
+.period-day-input{height:44px!important;text-align:left!important;font-size:16px!important;font-weight:650!important;letter-spacing:.01em!important;caret-color:var(--gold)!important;pointer-events:auto!important;user-select:text!important;-webkit-user-select:text!important;touch-action:manipulation!important;}
+.period-step-btn{height:44px;border-radius:10px;border:1px solid var(--border2);background:var(--cream2);color:var(--ink);font-size:22px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;}
+.period-step-btn:hover{border-color:var(--gold);color:var(--gold);}
+.period-quick-days{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.period-quick-day{border:1px solid var(--border);background:var(--cream2);color:var(--ink3);border-radius:999px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+.period-quick-day:hover{border-color:var(--gold);color:var(--gold);background:rgba(184,134,11,.08);}
+
 /* ═══════════════════════════════════════════
    RESET MODAL — options
 ═══════════════════════════════════════════ */
@@ -25488,17 +25510,83 @@ function updatePeriodLabel(){
   el.textContent=`${fmtD(d1)} – ${fmtD(d2)}`;
 }
 function openPeriodEdit(){
-  openModal(`<div class="modal-title">${t('period.title')}<button class="modal-close" onclick="closeModal()">✕</button></div>
+  openModal(`<div class="modal-title">${t('period.title')}<button class="modal-close" type="button" onclick="closeModal()">✕</button></div>
     <div style="font-size:13px;color:var(--ink3);line-height:1.6;margin-bottom:16px">${t('period.hint1')}<br><strong>${t('period.example1')}</strong> ${t('period.or')} <strong>${t('period.example2')}</strong></div>
     <div class="form-row">
-      <label class="ob-label" style="display:block;margin-bottom:6px;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink4)">${t('period.startDayLabel')}</label>
-      <input class="finput" id="pe-start-day" type="number" min="1" max="31" placeholder="1" value="${getPeriodStartDay()}">
+      <label class="ob-label" for="pe-start-day" style="display:block;margin-bottom:6px;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink4)">${t('period.startDayLabel')}</label>
+      <div class="period-day-editor">
+        <button class="period-step-btn" type="button" id="pe-minus" aria-label="Decrease">−</button>
+        <input class="finput period-day-input" id="pe-start-day" type="text" inputmode="text" autocomplete="off" enterkeyhint="done" maxlength="24" placeholder="21 / Feb 21 / May 1" value="${getPeriodStartDay()}">
+        <button class="period-step-btn" type="button" id="pe-plus" aria-label="Increase">+</button>
+      </div>
+      <div class="period-quick-days" id="periodQuickDays"></div>
     </div>
-    <button class="btn-save" onclick="savePeriodEdit()">${t('period.applyBtn')}</button>`);
-  setTimeout(()=>document.getElementById('pe-start-day')?.focus(),100);
+    <button class="btn-save" type="button" id="pe-apply">${t('period.applyBtn')}</button>`);
+
+  const input=document.getElementById('pe-start-day');
+  const minus=document.getElementById('pe-minus');
+  const plus=document.getElementById('pe-plus');
+  const apply=document.getElementById('pe-apply');
+  const quick=document.getElementById('periodQuickDays');
+
+  function parsePeriodStartText(v){
+    const raw=String(v||'').trim().toLowerCase();
+    if(!raw)return 1;
+    const monthNames=[
+      'jan','january','ene','enero','feb','february','febrero','mar','march','marzo','apr','april','abr','abril','may','mayo','jun','june','junio','jul','july','julio','aug','august','ago','agosto','sep','sept','september','septiembre','oct','october','octubre','nov','november','noviembre','dec','december','dic','diciembre'
+    ];
+    const monthPattern=monthNames.join('|');
+    let m=raw.match(new RegExp('(?:'+monthPattern+')\s*([1-9]|[12][0-9]|3[01])\b','i'));
+    if(m)return normalizePeriodStartDay(m[1]);
+    m=raw.match(new RegExp('\b([1-9]|[12][0-9]|3[01])\s*(?:'+monthPattern+')\b','i'));
+    if(m)return normalizePeriodStartDay(m[1]);
+    m=raw.match(/([1-9]|[12][0-9]|3[01])/);
+    if(m)return normalizePeriodStartDay(m[1]);
+    return 1;
+  }
+  function setVal(v,selectIt){
+    if(!input)return;
+    input.value=String(v||'');
+    if(selectIt){try{input.focus({preventScroll:true});input.select();}catch(_){input.focus();}}
+  }
+  function step(delta){
+    const cur=parsePeriodStartText(input&&input.value);
+    setVal(Math.max(1,Math.min(31,cur+delta)),true);
+  }
+
+  if(input){
+    input.disabled=false;
+    input.readOnly=false;
+    input.removeAttribute('disabled');
+    input.removeAttribute('readonly');
+
+    // Keep all typing inside the modal input. Some global UI listeners use capture
+    // for charts/overlays; stopping propagation here prevents them from stealing keys.
+    ['keydown','keypress','keyup','beforeinput','input','mousedown','mouseup','click','touchstart','touchend','pointerdown','pointerup'].forEach(function(type){
+      input.addEventListener(type,function(ev){ev.stopPropagation();},true);
+    });
+    // Free typing is intentional here: users can enter just a day (21),
+    // or a natural date fragment (Feb 21, 21 May, March 1, etc.).
+    input.addEventListener('keydown',function(ev){
+      if(ev.key==='Enter'){ev.preventDefault();savePeriodEdit();}
+      if(ev.key==='ArrowUp'){ev.preventDefault();step(1);}
+      if(ev.key==='ArrowDown'){ev.preventDefault();step(-1);}
+    });
+  }
+  if(minus)minus.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();step(-1);});
+  if(plus)plus.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();step(1);});
+  if(apply)apply.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();savePeriodEdit();});
+  if(quick){
+    quick.innerHTML=[1,5,10,15,20,25,31].map(function(d){return `<button type="button" class="period-quick-day" data-day="${d}">${d}</button>`;}).join('');
+    quick.querySelectorAll('.period-quick-day').forEach(function(btn){
+      btn.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();setVal(btn.dataset.day,true);});
+    });
+  }
+  setTimeout(function(){setVal(getPeriodStartDay(),true);},80);
 }
 function savePeriodEdit(){
-  const startDay=normalizePeriodStartDay(document.getElementById('pe-start-day')?.value);
+  const input=document.getElementById('pe-start-day');
+  const startDay=(typeof parsePeriodStartText==='function')?parsePeriodStartText(input?input.value:1):normalizePeriodStartDay(input?input.value:1);
   CONFIG.periodStartDay=startDay;
   CONFIG.period=`${startDay}-cycle`;
   delete CONFIG.periodLabel;
