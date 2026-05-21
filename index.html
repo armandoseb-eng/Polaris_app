@@ -27307,6 +27307,220 @@ function exportPDF(){
   }
 </style>
 
+
+
+<!-- ATLAS PATCH — WEALTH MANAGER MONTH NAV + MOBILE ACTIONS CLEANUP -->
+<style>
+/* Desktop: single selected month in a compact, premium control */
+.modal-box.wealth-modal .wm-main-top{
+  display:grid !important;
+  grid-template-columns:auto minmax(0,1fr) !important;
+  align-items:center !important;
+  column-gap:12px !important;
+  row-gap:10px !important;
+  margin-bottom:12px !important;
+  padding-bottom:12px !important;
+  border-bottom:1px solid var(--border) !important;
+}
+
+.modal-box.wealth-modal .wm-month-nav{
+  width:244px !important;
+  max-width:244px !important;
+  min-width:244px !important;
+  display:grid !important;
+  grid-template-columns:36px minmax(0,1fr) 36px !important;
+  align-items:center !important;
+  gap:6px !important;
+  padding:4px !important;
+  border:1px solid var(--border) !important;
+  border-radius:999px !important;
+  background:var(--cream2) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24) !important;
+}
+
+.modal-box.wealth-modal .wm-month-nav .wm-month-strip{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  min-width:0 !important;
+  width:100% !important;
+  height:36px !important;
+  min-height:36px !important;
+  overflow:hidden !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:0 !important;
+  gap:0 !important;
+}
+
+.modal-box.wealth-modal .wm-month-chip{
+  width:100% !important;
+  min-width:0 !important;
+  height:36px !important;
+  padding:0 10px !important;
+  margin:0 !important;
+  border-radius:999px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+
+.modal-box.wealth-modal .wm-month-arrow{
+  width:36px !important;
+  height:36px !important;
+  border-radius:50% !important;
+  border:0 !important;
+  background:transparent !important;
+  color:var(--ink3) !important;
+  box-shadow:none !important;
+}
+.modal-box.wealth-modal .wm-month-arrow:hover:not(:disabled){
+  background:var(--paper) !important;
+  color:var(--gold) !important;
+  transform:none !important;
+}
+
+.modal-box.wealth-modal .wm-main-actions{
+  justify-self:end !important;
+  min-width:0 !important;
+  height:auto !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:8px !important;
+  flex-wrap:wrap !important;
+}
+
+/* Mobile: keep the month control clean, then make the action buttons fit */
+@media(max-width:640px){
+  .modal-box.wealth-modal .wm-main-top{
+    grid-template-columns:1fr !important;
+    align-items:stretch !important;
+    gap:8px !important;
+    padding-bottom:10px !important;
+  }
+
+  .modal-box.wealth-modal .wm-month-nav{
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+    grid-template-columns:34px minmax(0,1fr) 34px !important;
+    gap:5px !important;
+    padding:4px !important;
+  }
+
+  .modal-box.wealth-modal .wm-month-nav .wm-month-strip{
+    height:34px !important;
+    min-height:34px !important;
+  }
+
+  .modal-box.wealth-modal .wm-month-chip{
+    height:34px !important;
+    font-size:11.5px !important;
+  }
+
+  .modal-box.wealth-modal .wm-month-arrow{
+    width:34px !important;
+    height:34px !important;
+    font-size:19px !important;
+  }
+
+  .modal-box.wealth-modal .wm-main-actions{
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr 38px !important;
+    grid-auto-rows:36px !important;
+    gap:7px !important;
+    align-items:stretch !important;
+    justify-content:stretch !important;
+  }
+
+  .modal-box.wealth-modal .wm-export-menu{
+    grid-column:1 !important;
+    grid-row:1 !important;
+    width:100% !important;
+  }
+  .modal-box.wealth-modal .wm-export-trigger{
+    width:100% !important;
+    height:36px !important;
+    min-height:36px !important;
+    padding:0 8px !important;
+    font-size:11px !important;
+    border-radius:10px !important;
+  }
+
+  .modal-box.wealth-modal .wm-add-month.ghost{
+    grid-column:2 !important;
+    grid-row:1 !important;
+  }
+  .modal-box.wealth-modal .wm-add-month:not(.ghost){
+    grid-column:1 !important;
+    grid-row:2 !important;
+  }
+  .modal-box.wealth-modal .wm-delete-month{
+    grid-column:2 !important;
+    grid-row:2 !important;
+  }
+  .modal-box.wealth-modal .wm-close-top{
+    grid-column:3 !important;
+    grid-row:1 / span 2 !important;
+    width:38px !important;
+    height:100% !important;
+    min-height:79px !important;
+    border-radius:12px !important;
+  }
+
+  .modal-box.wealth-modal .wm-add-month,
+  .modal-box.wealth-modal .wm-delete-month{
+    width:100% !important;
+    height:36px !important;
+    min-height:36px !important;
+    padding:0 8px !important;
+    border-radius:10px !important;
+    font-size:10.5px !important;
+    line-height:1.05 !important;
+    white-space:normal !important;
+    text-align:center !important;
+  }
+
+  .modal-box.wealth-modal .wm-delete-month{
+    font-size:0 !important;
+  }
+  .modal-box.wealth-modal .wm-delete-month::after{
+    content:attr(data-short) !important;
+    font-size:10.5px !important;
+    font-weight:900 !important;
+    line-height:1 !important;
+  }
+}
+</style>
+<script>
+(function(){
+  function polishWealthManagerButtons(){
+    var modal=document.querySelector('.modal-box.wealth-modal');
+    if(!modal)return;
+    var del=modal.querySelector('.wm-delete-month');
+    if(del) del.setAttribute('data-short', (window.LANG==='en') ? 'Delete' : 'Eliminar');
+  }
+  document.addEventListener('click', function(){ setTimeout(polishWealthManagerButtons, 40); }, true);
+  window.addEventListener('resize', function(){ setTimeout(polishWealthManagerButtons, 80); });
+  var oldSwitch=window.wmSwitch;
+  if(typeof oldSwitch==='function'){
+    window.wmSwitch=function(tab){
+      oldSwitch(tab);
+      setTimeout(polishWealthManagerButtons, 40);
+    };
+  }
+  setTimeout(polishWealthManagerButtons, 250);
+})();
+<\/script>
+
 </body></html>`);
   win.document.close();
 }
@@ -27458,12 +27672,11 @@ function wealthManagerMonthStrip(){
   const prevDisabled=activeIdx<=0?' disabled aria-disabled="true"':'';
   const nextDisabled=activeIdx>=months.length-1?' disabled aria-disabled="true"':'';
 
-  // Keep this deliberately compact: 2 months on desktop, 1 month on mobile.
-  // This avoids the edge chip flicker/clipping that happened with a scrollable strip.
-  const isMobile=typeof window!=="undefined" && window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
-  const visibleCount=isMobile?1:2;
-  let start=activeIdx;
-  if(visibleCount===2 && activeIdx>=months.length-1) start=Math.max(0,months.length-2);
+  // Keep this deliberately compact: always show only the selected month.
+  // The arrows handle navigation, which keeps the modal cleaner on desktop
+  // and avoids wrapping/clipping on mobile.
+  const visibleCount=1;
+  const start=activeIdx;
   const visible=months.slice(start,start+visibleCount);
 
   return `<div class="wm-month-nav wm-month-nav-${visibleCount}" aria-label="Wealth month navigation">
@@ -28755,6 +28968,220 @@ function wmExportExcel(){
   }
 </style>
 
+
+
+<!-- ATLAS PATCH — WEALTH MANAGER MONTH NAV + MOBILE ACTIONS CLEANUP -->
+<style>
+/* Desktop: single selected month in a compact, premium control */
+.modal-box.wealth-modal .wm-main-top{
+  display:grid !important;
+  grid-template-columns:auto minmax(0,1fr) !important;
+  align-items:center !important;
+  column-gap:12px !important;
+  row-gap:10px !important;
+  margin-bottom:12px !important;
+  padding-bottom:12px !important;
+  border-bottom:1px solid var(--border) !important;
+}
+
+.modal-box.wealth-modal .wm-month-nav{
+  width:244px !important;
+  max-width:244px !important;
+  min-width:244px !important;
+  display:grid !important;
+  grid-template-columns:36px minmax(0,1fr) 36px !important;
+  align-items:center !important;
+  gap:6px !important;
+  padding:4px !important;
+  border:1px solid var(--border) !important;
+  border-radius:999px !important;
+  background:var(--cream2) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24) !important;
+}
+
+.modal-box.wealth-modal .wm-month-nav .wm-month-strip{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  min-width:0 !important;
+  width:100% !important;
+  height:36px !important;
+  min-height:36px !important;
+  overflow:hidden !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:0 !important;
+  gap:0 !important;
+}
+
+.modal-box.wealth-modal .wm-month-chip{
+  width:100% !important;
+  min-width:0 !important;
+  height:36px !important;
+  padding:0 10px !important;
+  margin:0 !important;
+  border-radius:999px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+
+.modal-box.wealth-modal .wm-month-arrow{
+  width:36px !important;
+  height:36px !important;
+  border-radius:50% !important;
+  border:0 !important;
+  background:transparent !important;
+  color:var(--ink3) !important;
+  box-shadow:none !important;
+}
+.modal-box.wealth-modal .wm-month-arrow:hover:not(:disabled){
+  background:var(--paper) !important;
+  color:var(--gold) !important;
+  transform:none !important;
+}
+
+.modal-box.wealth-modal .wm-main-actions{
+  justify-self:end !important;
+  min-width:0 !important;
+  height:auto !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:8px !important;
+  flex-wrap:wrap !important;
+}
+
+/* Mobile: keep the month control clean, then make the action buttons fit */
+@media(max-width:640px){
+  .modal-box.wealth-modal .wm-main-top{
+    grid-template-columns:1fr !important;
+    align-items:stretch !important;
+    gap:8px !important;
+    padding-bottom:10px !important;
+  }
+
+  .modal-box.wealth-modal .wm-month-nav{
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+    grid-template-columns:34px minmax(0,1fr) 34px !important;
+    gap:5px !important;
+    padding:4px !important;
+  }
+
+  .modal-box.wealth-modal .wm-month-nav .wm-month-strip{
+    height:34px !important;
+    min-height:34px !important;
+  }
+
+  .modal-box.wealth-modal .wm-month-chip{
+    height:34px !important;
+    font-size:11.5px !important;
+  }
+
+  .modal-box.wealth-modal .wm-month-arrow{
+    width:34px !important;
+    height:34px !important;
+    font-size:19px !important;
+  }
+
+  .modal-box.wealth-modal .wm-main-actions{
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr 38px !important;
+    grid-auto-rows:36px !important;
+    gap:7px !important;
+    align-items:stretch !important;
+    justify-content:stretch !important;
+  }
+
+  .modal-box.wealth-modal .wm-export-menu{
+    grid-column:1 !important;
+    grid-row:1 !important;
+    width:100% !important;
+  }
+  .modal-box.wealth-modal .wm-export-trigger{
+    width:100% !important;
+    height:36px !important;
+    min-height:36px !important;
+    padding:0 8px !important;
+    font-size:11px !important;
+    border-radius:10px !important;
+  }
+
+  .modal-box.wealth-modal .wm-add-month.ghost{
+    grid-column:2 !important;
+    grid-row:1 !important;
+  }
+  .modal-box.wealth-modal .wm-add-month:not(.ghost){
+    grid-column:1 !important;
+    grid-row:2 !important;
+  }
+  .modal-box.wealth-modal .wm-delete-month{
+    grid-column:2 !important;
+    grid-row:2 !important;
+  }
+  .modal-box.wealth-modal .wm-close-top{
+    grid-column:3 !important;
+    grid-row:1 / span 2 !important;
+    width:38px !important;
+    height:100% !important;
+    min-height:79px !important;
+    border-radius:12px !important;
+  }
+
+  .modal-box.wealth-modal .wm-add-month,
+  .modal-box.wealth-modal .wm-delete-month{
+    width:100% !important;
+    height:36px !important;
+    min-height:36px !important;
+    padding:0 8px !important;
+    border-radius:10px !important;
+    font-size:10.5px !important;
+    line-height:1.05 !important;
+    white-space:normal !important;
+    text-align:center !important;
+  }
+
+  .modal-box.wealth-modal .wm-delete-month{
+    font-size:0 !important;
+  }
+  .modal-box.wealth-modal .wm-delete-month::after{
+    content:attr(data-short) !important;
+    font-size:10.5px !important;
+    font-weight:900 !important;
+    line-height:1 !important;
+  }
+}
+</style>
+<script>
+(function(){
+  function polishWealthManagerButtons(){
+    var modal=document.querySelector('.modal-box.wealth-modal');
+    if(!modal)return;
+    var del=modal.querySelector('.wm-delete-month');
+    if(del) del.setAttribute('data-short', (window.LANG==='en') ? 'Delete' : 'Eliminar');
+  }
+  document.addEventListener('click', function(){ setTimeout(polishWealthManagerButtons, 40); }, true);
+  window.addEventListener('resize', function(){ setTimeout(polishWealthManagerButtons, 80); });
+  var oldSwitch=window.wmSwitch;
+  if(typeof oldSwitch==='function'){
+    window.wmSwitch=function(tab){
+      oldSwitch(tab);
+      setTimeout(polishWealthManagerButtons, 40);
+    };
+  }
+  setTimeout(polishWealthManagerButtons, 250);
+})();
+<\/script>
+
 </body></html>`;
   wealthDownloadBlob(html,'application/vnd.ms-excel;charset=utf-8',wealthSafeFileName(key)+'.xls');
 }
@@ -28839,6 +29266,7 @@ function renderWealthManager(){
               <button class="wm-export-option csv" onclick="wmExportCsv();wmCloseExportMenu()"><span class="wm-export-option-ico">⌁</span>${t('patrimonio.wmExportCsv')}</button>
             </div>
           </div>
+          <button class="wm-add-month ghost" onclick="wmAddPreviousMonth()">${LANG==='en'?'+ Previous month':'+ Mes previo'}</button>
           <button class="wm-add-month" onclick="wmAddMonth()">${t('patrimonio.wmAddMonth')}</button>
           <button class="wm-delete-month" onclick="wmDeleteMonth()">${t('patrimonio.wmDeleteMonth')}</button>
           <button class="wm-close-top" onclick="closeModal();document.getElementById('modalBox').classList.remove('wealth-modal')">✕</button>
@@ -28916,6 +29344,30 @@ function wmToggle(id){
     });
   }
 }
+function wmAddPreviousMonth(){
+  const w=ensureWealth();
+  if(!w.managerMonths) w.managerMonths=[];
+
+  const months=wealthManagerMonths();
+  const first=months[0] || {m:cM,y:cY};
+  const prevDate=new Date(first.y,first.m-1,1);
+  const key=mKey(prevDate.getMonth(),prevDate.getFullYear());
+
+  if(!w.managerMonths.includes(key)) w.managerMonths.unshift(key);
+
+  // Previous months start blank per entry, so past data can be uploaded manually.
+  w.items.forEach(i=>{
+    if(!i.monthlyValues) i.monthlyValues={};
+    if(i.monthlyValues[key]==null) i.monthlyValues[key]=0;
+  });
+
+  w.monthly[key]=wealthTotals(key).net;
+  wealthMgrMonth=key;
+  persist();
+  wmSwitch(wealthMgrTab);
+  render();
+}
+
 function wmAddMonth(){
   const w=ensureWealth();
   if(!w.managerMonths) w.managerMonths=[];
@@ -33664,6 +34116,220 @@ function ovRenderInsights(p){
     }
   }
 </style>
+
+
+
+<!-- ATLAS PATCH — WEALTH MANAGER MONTH NAV + MOBILE ACTIONS CLEANUP -->
+<style>
+/* Desktop: single selected month in a compact, premium control */
+.modal-box.wealth-modal .wm-main-top{
+  display:grid !important;
+  grid-template-columns:auto minmax(0,1fr) !important;
+  align-items:center !important;
+  column-gap:12px !important;
+  row-gap:10px !important;
+  margin-bottom:12px !important;
+  padding-bottom:12px !important;
+  border-bottom:1px solid var(--border) !important;
+}
+
+.modal-box.wealth-modal .wm-month-nav{
+  width:244px !important;
+  max-width:244px !important;
+  min-width:244px !important;
+  display:grid !important;
+  grid-template-columns:36px minmax(0,1fr) 36px !important;
+  align-items:center !important;
+  gap:6px !important;
+  padding:4px !important;
+  border:1px solid var(--border) !important;
+  border-radius:999px !important;
+  background:var(--cream2) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24) !important;
+}
+
+.modal-box.wealth-modal .wm-month-nav .wm-month-strip{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  min-width:0 !important;
+  width:100% !important;
+  height:36px !important;
+  min-height:36px !important;
+  overflow:hidden !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:0 !important;
+  gap:0 !important;
+}
+
+.modal-box.wealth-modal .wm-month-chip{
+  width:100% !important;
+  min-width:0 !important;
+  height:36px !important;
+  padding:0 10px !important;
+  margin:0 !important;
+  border-radius:999px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+
+.modal-box.wealth-modal .wm-month-arrow{
+  width:36px !important;
+  height:36px !important;
+  border-radius:50% !important;
+  border:0 !important;
+  background:transparent !important;
+  color:var(--ink3) !important;
+  box-shadow:none !important;
+}
+.modal-box.wealth-modal .wm-month-arrow:hover:not(:disabled){
+  background:var(--paper) !important;
+  color:var(--gold) !important;
+  transform:none !important;
+}
+
+.modal-box.wealth-modal .wm-main-actions{
+  justify-self:end !important;
+  min-width:0 !important;
+  height:auto !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:8px !important;
+  flex-wrap:wrap !important;
+}
+
+/* Mobile: keep the month control clean, then make the action buttons fit */
+@media(max-width:640px){
+  .modal-box.wealth-modal .wm-main-top{
+    grid-template-columns:1fr !important;
+    align-items:stretch !important;
+    gap:8px !important;
+    padding-bottom:10px !important;
+  }
+
+  .modal-box.wealth-modal .wm-month-nav{
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+    grid-template-columns:34px minmax(0,1fr) 34px !important;
+    gap:5px !important;
+    padding:4px !important;
+  }
+
+  .modal-box.wealth-modal .wm-month-nav .wm-month-strip{
+    height:34px !important;
+    min-height:34px !important;
+  }
+
+  .modal-box.wealth-modal .wm-month-chip{
+    height:34px !important;
+    font-size:11.5px !important;
+  }
+
+  .modal-box.wealth-modal .wm-month-arrow{
+    width:34px !important;
+    height:34px !important;
+    font-size:19px !important;
+  }
+
+  .modal-box.wealth-modal .wm-main-actions{
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr 38px !important;
+    grid-auto-rows:36px !important;
+    gap:7px !important;
+    align-items:stretch !important;
+    justify-content:stretch !important;
+  }
+
+  .modal-box.wealth-modal .wm-export-menu{
+    grid-column:1 !important;
+    grid-row:1 !important;
+    width:100% !important;
+  }
+  .modal-box.wealth-modal .wm-export-trigger{
+    width:100% !important;
+    height:36px !important;
+    min-height:36px !important;
+    padding:0 8px !important;
+    font-size:11px !important;
+    border-radius:10px !important;
+  }
+
+  .modal-box.wealth-modal .wm-add-month.ghost{
+    grid-column:2 !important;
+    grid-row:1 !important;
+  }
+  .modal-box.wealth-modal .wm-add-month:not(.ghost){
+    grid-column:1 !important;
+    grid-row:2 !important;
+  }
+  .modal-box.wealth-modal .wm-delete-month{
+    grid-column:2 !important;
+    grid-row:2 !important;
+  }
+  .modal-box.wealth-modal .wm-close-top{
+    grid-column:3 !important;
+    grid-row:1 / span 2 !important;
+    width:38px !important;
+    height:100% !important;
+    min-height:79px !important;
+    border-radius:12px !important;
+  }
+
+  .modal-box.wealth-modal .wm-add-month,
+  .modal-box.wealth-modal .wm-delete-month{
+    width:100% !important;
+    height:36px !important;
+    min-height:36px !important;
+    padding:0 8px !important;
+    border-radius:10px !important;
+    font-size:10.5px !important;
+    line-height:1.05 !important;
+    white-space:normal !important;
+    text-align:center !important;
+  }
+
+  .modal-box.wealth-modal .wm-delete-month{
+    font-size:0 !important;
+  }
+  .modal-box.wealth-modal .wm-delete-month::after{
+    content:attr(data-short) !important;
+    font-size:10.5px !important;
+    font-weight:900 !important;
+    line-height:1 !important;
+  }
+}
+</style>
+<script>
+(function(){
+  function polishWealthManagerButtons(){
+    var modal=document.querySelector('.modal-box.wealth-modal');
+    if(!modal)return;
+    var del=modal.querySelector('.wm-delete-month');
+    if(del) del.setAttribute('data-short', (window.LANG==='en') ? 'Delete' : 'Eliminar');
+  }
+  document.addEventListener('click', function(){ setTimeout(polishWealthManagerButtons, 40); }, true);
+  window.addEventListener('resize', function(){ setTimeout(polishWealthManagerButtons, 80); });
+  var oldSwitch=window.wmSwitch;
+  if(typeof oldSwitch==='function'){
+    window.wmSwitch=function(tab){
+      oldSwitch(tab);
+      setTimeout(polishWealthManagerButtons, 40);
+    };
+  }
+  setTimeout(polishWealthManagerButtons, 250);
+})();
+</script>
 
 </body>
 </html>
