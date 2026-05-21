@@ -27543,9 +27543,9 @@ function wealthSeries(){
   return arr;
 }
 function wealthReadableStatus(deltaPct){
-  if(deltaPct<0)return 'Caída';
-  if(deltaPct>=4)return 'Mejorando';
-  return 'Estable';
+  if(deltaPct<0)return LANG==='en'?'Down':'Caída';
+  if(deltaPct>=4)return LANG==='en'?'Improving':'Mejorando';
+  return LANG==='en'?'Stable':'Estable';
 }
 function renderPatrimonio(){
   const w=ensureWealth();
@@ -27594,7 +27594,7 @@ ${wealthStructureCard(totals)}
     <div class="wealth-bottom">
       <div class="wealth-card wmini"><h3>${t('patrimonio.topAssetsTitle')}</h3><p>${t('patrimonio.topAssetsSub')}</p>${topAssets.slice(0,5).map(i=>wealthMiniItem(i,totals.assets)).join('')}<button class="wlink" onclick="openWealthManager('assets')">${t('patrimonio.topAssetsLink')}</button></div>
       <div class="wealth-card wmini"><h3>${t('patrimonio.topLiabsTitle')}</h3><p>${t('patrimonio.topLiabsSub')}</p>${topLiabs.slice(0,5).map(i=>wealthMiniItem(i,totals.liabs,true)).join('')}<button class="wlink red" onclick="openWealthManager('liabilities')">${t('patrimonio.topLiabsLink')}</button></div>
-      <div class="wealth-card wmini"><h3>${t('patrimonio.readingsTitle')}</h3><p>${t('patrimonio.readingsSub')}</p>${wealthReadings(totals,topAssets)}<button class="wlink" onclick="alert('Próximo paso: explicar la fórmula de cada lectura y su peso.')">${t('patrimonio.readingsLink')}</button></div>
+      <div class="wealth-card wmini"><h3>${t('patrimonio.readingsTitle')}</h3><p>${t('patrimonio.readingsSub')}</p>${wealthReadings(totals,topAssets)}<button class="wlink" onclick="openWealthCalcModal()">${t('patrimonio.readingsLink')}</button></div>
     </div>
     <div class="wealth-updated">${t('patrimonio.updatedLabel').replace('{day}',new Date().getDate()).replace('{month}',LANG==='en'?MONTHS_EN[new Date().getMonth()]:MONTHS[new Date().getMonth()].toLowerCase()).replace('{year}',new Date().getFullYear())}</div>
   </div>`;
@@ -27783,11 +27783,19 @@ function wealthNiceMax(v){
   return step*pow;
 }
 function wealthMonthCards(series){
-  const show=series.slice(-6).map((_,i)=>series.length-6+i).filter(i=>i>=0);
-  let html='<div class="wealth-month-cards">';
-  show.forEach((idx)=>{
-    const d=series[idx], prev=series[idx-1]||d; const delta=d.val-prev.val; const pct=prev.val?delta/prev.val*100:0;
-    html+=`<div class="wmonth ${idx===series.length-1?'on':''} ${delta<0?'neg':''}"><div class="m">${monthName(d.m,true)} ${d.y}</div><div class="v">${fmt(d.val)}</div><div class="c">${delta>=0?'+':''}${fmt(delta)}</div><div class="c">${delta>=0?'+':''}${pct.toFixed(1)}%</div><div class="s">• ${wealthReadableStatus(pct)}</div></div>`;
+  // Show the 6 most recent month cards, left to right from newest to oldest.
+  // When a new wealth month is added, it enters first and the oldest visible
+  // card naturally drops out.
+  const clean=wealthTrimLeadingEmptySeries(series||[]);
+  const show=clean.slice(-6).reverse();
+  let html='<div class="wealth-month-cards wealth-month-cards-recent">';
+  show.forEach((d)=>{
+    const idx=clean.findIndex(x=>x.key===d.key);
+    const prev=idx>0?clean[idx-1]:d;
+    const delta=(+d.val||0)-(+prev.val||0);
+    const pct=(+prev.val||0)?delta/(+prev.val||0)*100:0;
+    const isLatest=d.key===clean[clean.length-1].key;
+    html+=`<div class="wmonth ${isLatest?'on':''} ${delta<0?'neg':''}"><div class="m">${monthName(d.m,true)} ${d.y}</div><div class="v">${fmt(d.val)}</div><div class="c">${delta>=0?'+':''}${fmt(delta)}</div><div class="c">${delta>=0?'+':''}${pct.toFixed(1)}%</div><div class="s">• ${wealthReadableStatus(pct)}</div></div>`;
   });
   return html+'</div>';
 }
@@ -27819,6 +27827,17 @@ function wealthCompositionSection(totals){
     </div>
     <div class="wealth-composition-foot"><span>ⓘ ${t('patrimonio.compositionBasedOn')}</span><button class="wlink" onclick="openWealthManager('assets')">${t('patrimonio.compositionReview')} ›</button></div>
   </div>`;
+}
+function wealthFmtDistributionAmount(value){
+  const cur=CONFIG.currency||'£';
+  const num=Number(value)||0;
+  const sign=num<0?'-':'';
+  const rounded=Math.round(Math.abs(num));
+  // Force thousands separators even for 4-digit values.
+  // Intl in es-ES may render 6200 without a separator, so we use a deterministic formatter here.
+  const sep=LANG==='en'?',':'.';
+  const formatted=String(rounded).replace(/\B(?=(\d{3})+(?!\d))/g,sep);
+  return `${sign}${cur}${formatted}`;
 }
 function wealthDistributionCard(kind,total){
   const isLiab=kind==='liability';
@@ -27853,18 +27872,18 @@ function wealthDistributionCard(kind,total){
       <span class="wealth-dist-dot" style="background:${palette[i%palette.length]}"></span>
       <span class="wealth-dist-name">${escapeHtml(g.name)}</span>
       <strong>${pct.toFixed(0)}%</strong>
-      <em>${fmt(g.value)}</em>
+      <em>${wealthFmtDistributionAmount(g.value)}</em>
     </div>`;
   }).join('');
   const rest=groups.slice(5).reduce((a,g)=>a+g.value,0);
-  const restHtml=rest>0?`<div class="wealth-dist-legend-row muted"><span class="wealth-dist-dot"></span><span class="wealth-dist-name">${LANG==='en'?'Other':'Otros'}</span><strong>${(rest/total*100).toFixed(0)}%</strong><em>${fmt(rest)}</em></div>`:'';
+  const restHtml=rest>0?`<div class="wealth-dist-legend-row muted"><span class="wealth-dist-dot"></span><span class="wealth-dist-name">${LANG==='en'?'Other':'Otros'}</span><strong>${(rest/total*100).toFixed(0)}%</strong><em>${wealthFmtDistributionAmount(rest)}</em></div>`:'';
   return `<div class="wealth-card wealth-dist-card ${isLiab?'liability':'asset'}">
     <div class="wealth-dist-title-row"><div><h3>${title}</h3><p>${sub}</p></div></div>
     <div class="wealth-dist-body">
       <div class="wealth-donut" style="background:conic-gradient(${segs})"><div><span>${groups.length}</span><small>${wealthCatsLabel(groups.length)}</small></div></div>
       <div class="wealth-dist-legend">${legend}${restHtml}</div>
     </div>
-    <div class="wealth-dist-total"><span>${totalLabel}</span><strong>${fmt(total)}</strong></div>
+    <div class="wealth-dist-total"><span>${totalLabel}</span><strong>${wealthFmtDistributionAmount(total)}</strong></div>
   </div>`;
 }
 
@@ -27951,6 +27970,48 @@ function wealthReadings(totals,topAssets){
   <div class="wreading"><div class="wreading-ico blue">↗</div><div><div class="wreading-title">${t('patrimonio.readingGrowthTitle')}</div><div class="wreading-body">${t('patrimonio.readingGrowthBody')}</div></div><span class="wbadge blue">${t('patrimonio.readingGrowthBadge')}</span></div>
   <div class="wreading"><div class="wreading-ico">🛡️</div><div><div class="wreading-title">${debtGood?t('patrimonio.readingDebtHealthyTitle'):t('patrimonio.readingDebtHighTitle')}</div><div class="wreading-body">${t('patrimonio.readingDebtBody').replace('{pct}',totals.debtRatio.toFixed(0))}</div></div><span class="wbadge ${debtGood?'':'warn'}">${debtGood?t('patrimonio.readingDebtHealthyBadge'):t('patrimonio.readingDebtReviewBadge')}</span></div>`;
 }
+function openWealthCalcModal(){
+  const totals=wealthTotals();
+  const topAssets=[...wealthAssets()].sort((a,b)=>wealthItemValue(b,wealthCurrentKey())-wealthItemValue(a,wealthCurrentKey()));
+  const biggest=topAssets[0];
+  const topPct=biggest&&totals.assets?(wealthItemValue(biggest,wealthCurrentKey())/totals.assets*100):0;
+  const liquidLow=totals.liquid<12;
+  const debtGood=totals.debtRatio<25;
+  const divOk=topPct<=40;
+  const en=LANG==='en';
+  const title=en?'How Polaris calculates this':'Cómo calcula esto Polaris';
+  const intro=en
+    ?'These readings are simple signals. They are not financial advice; they help you understand the structure of your wealth at a glance.'
+    :'Estas lecturas son señales simples. No son asesoría financiera; te ayudan a entender la estructura de tu patrimonio de un vistazo.';
+  const close=en?'Close':'Cerrar';
+  const rows=en?[
+    {icon:'🛡️',title:'Liquidity',formula:'Cash / total assets × 100',result:`${totals.liquid.toFixed(0)}%`,reading:liquidLow?'Low':'Healthy',body:'Cash is the asset class marked as Cash. Below 12% is flagged as low because your assets have less immediate flexibility.'},
+    {icon:'▰',title:'Diversification',formula:'Largest asset / total assets × 100',result:`${topPct.toFixed(0)}%`,reading:divOk?'Good':'Review',body:'If one asset is above 40% of total assets, Polaris marks the structure as concentrated.'},
+    {icon:'↗',title:'Growth',formula:'Current net worth vs previous months / YTD context',result:'+12.4%',reading:'Positive',body:'This reading highlights whether the trend is moving in the right direction. In this version, the YTD benchmark is used as a directional signal.'},
+    {icon:'🛡️',title:'Debt',formula:'Liabilities / total assets × 100',result:`${totals.debtRatio.toFixed(0)}%`,reading:debtGood?'Healthy':'Review',body:'Below 25% is treated as healthy. Above that, Polaris asks you to review how much debt is sitting against your asset base.'}
+  ]:[
+    {icon:'🛡️',title:'Liquidez',formula:'Cash / activos totales × 100',result:`${totals.liquid.toFixed(0)}%`,reading:liquidLow?'Baja':'Saludable',body:'Cash es la categoría de activo marcada como Cash. Por debajo de 12% se marca como baja porque tu patrimonio tiene menos flexibilidad inmediata.'},
+    {icon:'▰',title:'Diversificación',formula:'Activo más grande / activos totales × 100',result:`${topPct.toFixed(0)}%`,reading:divOk?'Buena':'Revisar',body:'Si un solo activo supera el 40% de tus activos totales, Polaris marca la estructura como concentrada.'},
+    {icon:'↗',title:'Crecimiento',formula:'Patrimonio neto actual vs meses previos / contexto YTD',result:'+12.4%',reading:'Positivo',body:'Esta lectura indica si la tendencia se mueve en la dirección correcta. En esta versión, el benchmark YTD se usa como señal direccional.'},
+    {icon:'🛡️',title:'Deuda',formula:'Pasivos / activos totales × 100',result:`${totals.debtRatio.toFixed(0)}%`,reading:debtGood?'Saludable':'Revisar',body:'Por debajo de 25% se considera saludable. Por encima, Polaris te pide revisar cuánto peso tiene la deuda frente a tu base de activos.'}
+  ];
+  const cards=rows.map(r=>`<div style="display:grid;grid-template-columns:38px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--border);">
+    <div style="width:38px;height:38px;border-radius:12px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:18px;">${r.icon}</div>
+    <div>
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:4px;">
+        <div style="font-size:14px;font-weight:800;color:var(--ink);letter-spacing:-.02em;">${r.title}</div>
+        <div style="font-size:12px;font-weight:800;color:var(--green);white-space:nowrap;">${r.result}</div>
+      </div>
+      <div style="font-size:11px;font-weight:750;color:var(--gold);margin-bottom:6px;">${r.formula}</div>
+      <div style="font-size:12.5px;line-height:1.45;color:var(--ink3);"><strong style="color:var(--ink2);">${r.reading}.</strong> ${r.body}</div>
+    </div>
+  </div>`).join('');
+  openModal(`<div class="modal-title"><span>${title}</span><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div style="font-size:13px;line-height:1.55;color:var(--ink3);margin:-4px 0 12px;">${intro}</div>
+    <div style="background:var(--cream2);border:1px solid var(--border);border-radius:14px;padding:2px 16px;margin-bottom:16px;">${cards}</div>
+    <button class="btn-save" onclick="closeModal()">${close}</button>`);
+}
+
 function escapeHtml(str){return String(str??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 
 function openWealthManager(tab='assets'){
@@ -33619,5 +33680,17 @@ function ovRenderInsights(p){
     letter-spacing:-.072em!important;
     overflow:visible!important;
   }
+}
+
+
+/* ATLAS PATCH — Wealth month cards: 6 most recent, newest to oldest */
+.wealth-month-cards.wealth-month-cards-recent{
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+}
+@media(max-width:900px){
+  .wealth-month-cards.wealth-month-cards-recent{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+}
+@media(max-width:540px){
+  .wealth-month-cards.wealth-month-cards-recent{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
 }
 </style>
