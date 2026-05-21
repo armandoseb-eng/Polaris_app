@@ -27651,14 +27651,17 @@ function wealthSetItemValue(i,key,val){
 function wealthManagerMonths(){
   const w=ensureWealth();
   const map=new Map();
+  const deleted=new Set(w.deletedManagerMonths||[]);
   const start=new Date(cY,cM-5,1);
 
   for(let i=0;i<6;i++){
     const d=new Date(start.getFullYear(),start.getMonth()+i,1);
-    map.set(mKey(d.getMonth(),d.getFullYear()),{m:d.getMonth(),y:d.getFullYear(),key:mKey(d.getMonth(),d.getFullYear())});
+    const key=mKey(d.getMonth(),d.getFullYear());
+    if(!deleted.has(key)) map.set(key,{m:d.getMonth(),y:d.getFullYear(),key});
   }
 
   (w.managerMonths||[]).forEach(key=>{
+    if(deleted.has(key)) return;
     const [y,m]=key.split('-').map(Number);
     map.set(key,{m,y,key});
   });
@@ -29360,12 +29363,14 @@ function wmToggle(id){
 function wmAddPreviousMonth(){
   const w=ensureWealth();
   if(!w.managerMonths) w.managerMonths=[];
+  if(!w.deletedManagerMonths) w.deletedManagerMonths=[];
 
   const months=wealthManagerMonths();
   const first=months[0] || {m:cM,y:cY};
   const prevDate=new Date(first.y,first.m-1,1);
   const key=mKey(prevDate.getMonth(),prevDate.getFullYear());
 
+  w.deletedManagerMonths=(w.deletedManagerMonths||[]).filter(k=>k!==key);
   if(!w.managerMonths.includes(key)) w.managerMonths.unshift(key);
 
   // Previous months start blank per entry, so past data can be uploaded manually.
@@ -29384,12 +29389,14 @@ function wmAddPreviousMonth(){
 function wmAddMonth(){
   const w=ensureWealth();
   if(!w.managerMonths) w.managerMonths=[];
+  if(!w.deletedManagerMonths) w.deletedManagerMonths=[];
 
   const months=wealthManagerMonths();
   const last=months[months.length-1] || {m:cM,y:cY};
   const nextDate=new Date(last.y,last.m+1,1);
   const key=mKey(nextDate.getMonth(),nextDate.getFullYear());
 
+  w.deletedManagerMonths=(w.deletedManagerMonths||[]).filter(k=>k!==key);
   if(!w.managerMonths.includes(key)) w.managerMonths.push(key);
 
   // New month starts blank per entry. The user can copy previous values if they want.
@@ -29417,7 +29424,12 @@ function wmDeleteMonth(){
 
   if(!confirm(t('patrimonio.wmConfirmDeleteMonth'))) return;
 
+  // Some months are generated automatically by the rolling wealth range,
+  // not stored inside managerMonths. Keep a deletion list so the selected
+  // month actually disappears no matter how it was created.
   w.managerMonths=(w.managerMonths||[]).filter(k=>k!==key);
+  if(!w.deletedManagerMonths) w.deletedManagerMonths=[];
+  if(!w.deletedManagerMonths.includes(key)) w.deletedManagerMonths.push(key);
   delete w.monthly[key];
 
   w.items.forEach(i=>{
@@ -29425,8 +29437,9 @@ function wmDeleteMonth(){
   });
 
   const remaining=wealthManagerMonths();
-  const prev=remaining[remaining.length-1];
-  wealthMgrMonth=prev ? prev.key : wealthCurrentKey();
+  const oldIdx=months.findIndex(d=>d.key===key);
+  const nextPick=remaining[Math.min(Math.max(oldIdx,0),remaining.length-1)] || remaining[remaining.length-1];
+  wealthMgrMonth=nextPick ? nextPick.key : wealthCurrentKey();
 
   persist();
   wmSwitch(wealthMgrTab);
