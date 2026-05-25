@@ -16118,11 +16118,21 @@ function getDefaultAhoGroups(){
 // ═══════════════════════════════════
 // STATE
 // ═══════════════════════════════════
-// Onboarding version: bump this number whenever we make meaningful changes
-// to the onboarding flow (new steps, branding changes, etc.) that we want
-// existing users to see. On load, if CONFIG.onboardingVersion is less than
-// this constant, the onboarding is shown again — existing data is preserved.
+// Onboarding version is stored for reference, but publishing a new app build
+// should not force returning users back into onboarding.
 const ONBOARDING_VERSION=2;
+const STORAGE_KEYS={
+  db:'polaris_v1_db',
+  config:'polaris_v1_config',
+  homeReflection:'polaris_v1_home_quick_reflection',
+  wealthResetEmpty:'polaris_v1_wealth_reset_empty'
+};
+const LEGACY_STORAGE_KEYS={
+  db:'md_db6',
+  config:'md_cfg6',
+  homeReflection:'polaris_home_quick_reflection',
+  wealthResetEmpty:'md_wealth_reset_empty'
+};
 let DB={}, CONFIG={name:'',currency:'£',period:'1-31',periodStart:1,periodEnd:31,photo:null,onboarded:false,onboardingVersion:0,sidebarCollapsed:false};
 let cM=new Date().getMonth(), cY=new Date().getFullYear();
 let activeTab='home', obCur='£', obPeriod='1-31';
@@ -16148,8 +16158,8 @@ let ovPeriod={kind:'year',from:0,to:11,customFrom:null,customTo:null};
 // ═══════════════════════════════════
 function persist(){
   try{
-    localStorage.setItem('md_db6',JSON.stringify(DB));
-    localStorage.setItem('md_cfg6',JSON.stringify(CONFIG));
+    localStorage.setItem(STORAGE_KEYS.db,JSON.stringify(DB));
+    localStorage.setItem(STORAGE_KEYS.config,JSON.stringify(CONFIG));
     return true;
   }catch(e){
     // Most likely QuotaExceededError. Log for debugging and return false
@@ -16159,8 +16169,13 @@ function persist(){
   }
 }
 function hydrate(){
-  try{const d=localStorage.getItem('md_db6');const c=localStorage.getItem('md_cfg6');
-  if(d)DB=JSON.parse(d);if(c)CONFIG={...CONFIG,...JSON.parse(c)};}catch(e){}
+  try{
+    const d=localStorage.getItem(STORAGE_KEYS.db)||localStorage.getItem(LEGACY_STORAGE_KEYS.db);
+    const c=localStorage.getItem(STORAGE_KEYS.config)||localStorage.getItem(LEGACY_STORAGE_KEYS.config);
+    if(d)DB=JSON.parse(d);
+    if(c)CONFIG={...CONFIG,...JSON.parse(c)};
+    if((!localStorage.getItem(STORAGE_KEYS.db)&&d)||(!localStorage.getItem(STORAGE_KEYS.config)&&c))persist();
+  }catch(e){}
   // Migration: ensure date field exists on all entries across the 5 sections.
   // Old entries get date=null (they predate the date-tracking feature).
   // income.saldoAnterior is intentionally excluded — it's a balance, not an event.
@@ -27908,8 +27923,8 @@ function savePeriodEdit(){
 // RESET GRANULAR
 // ═══════════════════════════════════
 // Tres ámbitos posibles:
-//   'profile' → solo CONFIG (nombre, foto, moneda, período, tema) → md_cfg6
-//   'data'    → solo DB (ingresos, gastos, ahorro, inversión, deudas, diario) → md_db6
+//   'profile' → solo CONFIG (nombre, foto, moneda, período, tema)
+//   'data'    → solo DB (ingresos, gastos, ahorro, inversión, deudas, diario)
 //   'all'     → ambos
 function openResetModal(){
   openModal(`<div class="modal-title">${t('reset.title')}<button class="modal-close" onclick="closeModal()">✕</button></div>
@@ -27962,14 +27977,20 @@ function confirmReset(scope){
     </div>`);
 }
 function executeReset(scope){
-  if(scope==='profile'||scope==='all')localStorage.removeItem('md_cfg6');
+  if(scope==='profile'||scope==='all'){
+    localStorage.removeItem(STORAGE_KEYS.config);
+    localStorage.removeItem(LEGACY_STORAGE_KEYS.config);
+  }
   if(scope==='data'||scope==='all'){
-    localStorage.removeItem('md_db6');
-    localStorage.removeItem('polaris_home_quick_reflection');
+    localStorage.removeItem(STORAGE_KEYS.db);
+    localStorage.removeItem(LEGACY_STORAGE_KEYS.db);
+    localStorage.removeItem(STORAGE_KEYS.homeReflection);
+    localStorage.removeItem(LEGACY_STORAGE_KEYS.homeReflection);
     // Patrimonio se reconstruía con datos demo después del reset porque ensureWealth()
     // sembraba valores por defecto al no encontrar DB._wealth. Esta bandera hace
     // que el primer render posterior al reset cree patrimonio vacío, no demo.
-    localStorage.setItem('md_wealth_reset_empty','1');
+    localStorage.setItem(STORAGE_KEYS.wealthResetEmpty,'1');
+    localStorage.setItem(LEGACY_STORAGE_KEYS.wealthResetEmpty,'1');
   }
   location.reload();
 }
@@ -29771,10 +29792,11 @@ let wealthEvoOpenId=null;
 
 function ensureWealth(){
   if(!DB._wealth){
-    const resetEmpty=localStorage.getItem('md_wealth_reset_empty')==='1';
+    const resetEmpty=localStorage.getItem(STORAGE_KEYS.wealthResetEmpty)==='1'||localStorage.getItem(LEGACY_STORAGE_KEYS.wealthResetEmpty)==='1';
     if(resetEmpty){
       DB._wealth={items:[],monthly:{},managerMonths:[]};
-      localStorage.removeItem('md_wealth_reset_empty');
+      localStorage.removeItem(STORAGE_KEYS.wealthResetEmpty);
+      localStorage.removeItem(LEGACY_STORAGE_KEYS.wealthResetEmpty);
       persist();
       return DB._wealth;
     }
@@ -32384,7 +32406,8 @@ function obLoadSampleAndFinish(){
       sample._diary[wk]=Object.assign({},diaryData[i],{updatedAt:Date.now()-i*7*24*3600*1000});
     }
     // Wealth: sample data must populate Patrimonio too, especially after a reset.
-    localStorage.removeItem('md_wealth_reset_empty');
+    localStorage.removeItem(STORAGE_KEYS.wealthResetEmpty);
+    localStorage.removeItem(LEGACY_STORAGE_KEYS.wealthResetEmpty);
     const wk0=mK(getM(0).m,getM(0).y), wk1=mK(getM(1).m,getM(1).y), wk2=mK(getM(2).m,getM(2).y);
     sample._wealth={
       items:[
@@ -32518,11 +32541,10 @@ applyStaticTranslations();
 obSyncLangToggle();
 if(CONFIG.theme){document.documentElement.setAttribute('data-theme',CONFIG.theme);document.getElementById('themeBtn').textContent=CONFIG.theme==='dark'?'☀️':'🌙';}
 initMobileSummaryCompact();
-// Show onboarding for new users (!onboarded) and for existing users whose
-// stored onboarding version is older than the current one. Data is preserved.
-const storedObVersion=CONFIG.onboardingVersion||0;
+// Show onboarding only for users without a completed local profile.
+// Returning users keep their local data after GitHub updates.
 applySidebarState();
-if(!CONFIG.onboarded||storedObVersion<ONBOARDING_VERSION){document.getElementById('onboarding').style.display='flex';}
+if(!CONFIG.onboarded){document.getElementById('onboarding').style.display='flex';}
 else{updateProfileBtn();initMonths();updateTabNav();updatePeriodLabel();render();}
 
 
@@ -32733,7 +32755,7 @@ else{updateProfileBtn();initMonths();updateTabNav();updatePeriodLabel();render()
 
 
 function saveHomeQuickReflection(value){
-  try{localStorage.setItem('polaris_home_quick_reflection', value || '');}catch(e){}
+  try{localStorage.setItem(STORAGE_KEYS.homeReflection, value || '');}catch(e){}
   const el=document.getElementById('homeQuickReflectionStatus');
   if(el){
     el.classList.add('saved');
