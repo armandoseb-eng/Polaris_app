@@ -11083,6 +11083,58 @@ textarea[placeholder*="momentos de gasto"]{
 }
 </style>
 
+<!-- POLARIS PATCH - Wealth manager bottom scroll repair -->
+<style>
+.modal-box.wealth-modal{
+  max-height:calc(100dvh - 44px)!important;
+  overflow:hidden!important;
+}
+.modal-box.wealth-modal .wm-shell,
+.modal-box.wealth-modal .wm-shell-compact,
+.modal-box.wealth-modal .wm-premium-shell,
+.modal-box.wealth-modal .wm-cockpit-shell{
+  height:min(720px,calc(100dvh - 44px))!important;
+  min-height:0!important;
+  max-height:calc(100dvh - 44px)!important;
+}
+.modal-box.wealth-modal .wm-side,
+.modal-box.wealth-modal .wm-main{
+  min-height:0!important;
+  max-height:100%!important;
+}
+.modal-box.wealth-modal .wm-main{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain!important;
+  scroll-padding-bottom:120px!important;
+  padding-bottom:96px!important;
+}
+.modal-box.wealth-modal .wm-row.open,
+.modal-box.wealth-modal .wm-row.evo-open{
+  scroll-margin-bottom:120px!important;
+}
+.modal-box.wealth-modal .wm-form{
+  margin-bottom:18px!important;
+}
+@media(max-width:720px){
+  .modal-box.wealth-modal{
+    height:calc(100dvh - 18px)!important;
+    max-height:calc(100dvh - 18px)!important;
+  }
+  .modal-box.wealth-modal .wm-shell,
+  .modal-box.wealth-modal .wm-shell-compact,
+  .modal-box.wealth-modal .wm-premium-shell,
+  .modal-box.wealth-modal .wm-cockpit-shell{
+    height:100%!important;
+    max-height:100%!important;
+  }
+  .modal-box.wealth-modal .wm-main{
+    padding-bottom:112px!important;
+    scroll-padding-bottom:132px!important;
+  }
+}
+</style>
+
 <!-- POLARIS PATCH - Home brand header final -->
 <style>
 .app.home-mode .hdr{display:none!important;}
@@ -41672,3 +41724,63 @@ function beTextFromDiaryEntry(entry){
   .home-app-guide{align-self:stretch!important;justify-content:center!important;}
 }
 </style>
+
+<!-- POLARIS PATCH - Wealth manager EOF desktop scroll correction -->
+<style>
+@media(min-width:721px){
+  .modal-box.wealth-modal{
+    height:calc(100dvh - 48px)!important;
+    max-height:calc(100dvh - 48px)!important;
+    overflow:hidden!important;
+  }
+  .modal-box.wealth-modal .wm-shell,
+  .modal-box.wealth-modal .wm-shell-compact,
+  .modal-box.wealth-modal .wm-premium-shell,
+  .modal-box.wealth-modal .wm-cockpit-shell{
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+  }
+  .modal-box.wealth-modal .wm-main{
+    padding-bottom:76px!important;
+    scroll-padding-bottom:96px!important;
+  }
+  .modal-box.wealth-modal .wm-row.open,
+  .modal-box.wealth-modal .wm-row.evo-open{
+    scroll-margin-bottom:96px!important;
+  }
+  .modal-box.wealth-modal .wm-form{
+    margin-bottom:0!important;
+  }
+}
+</style>
+<script>
+(function(){
+  function settleDesktopWealthRow(id){
+    var row=document.getElementById('wm-'+id);
+    if(!row || !window.matchMedia || window.matchMedia('(max-width:720px)').matches)return;
+    var main=row.closest('.wm-main');
+    if(!main)return;
+    main.scrollTo({top:Math.max(0,row.offsetTop-16),behavior:'smooth'});
+  }
+  if(!window.__wealthEofDesktopScrollCorrectionPatch){
+    window.__wealthEofDesktopScrollCorrectionPatch=true;
+    var prevToggle=window.wmToggle;
+    if(typeof prevToggle==='function'){
+      window.wmToggle=function(id){
+        var out=prevToggle.apply(this,arguments);
+        setTimeout(function(){settleDesktopWealthRow(id);},120);
+        return out;
+      };
+    }
+    var prevToggleEvolution=window.wmToggleEvolution;
+    if(typeof prevToggleEvolution==='function'){
+      window.wmToggleEvolution=function(id){
+        var out=prevToggleEvolution.apply(this,arguments);
+        setTimeout(function(){settleDesktopWealthRow(id);},180);
+        return out;
+      };
+    }
+  }
+})();
+</script>
